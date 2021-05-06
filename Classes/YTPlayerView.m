@@ -66,6 +66,7 @@ NSString static *const kYTPlayerSyndicationRegexPattern = @"^https://tpc.googles
 
 @property (nonatomic) NSURL *originURL;
 @property (nonatomic, weak) UIView *initialLoadingView;
+@property (nonatomic, strong) UIView *errorView;
 
 @end
 
@@ -588,6 +589,11 @@ createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
     if (self.initialLoadingView) {
       [self.initialLoadingView removeFromSuperview];
     }
+
+	  if (self.errorView.superview) {
+		  [self.errorView removeFromSuperview];
+	  }
+
     if ([self.delegate respondsToSelector:@selector(playerViewDidBecomeReady:)]) {
       [self.delegate playerViewDidBecomeReady:self];
     }
@@ -627,6 +633,10 @@ createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
   } else if ([action isEqualToString:kYTPlayerCallbackOnYouTubeIframeAPIFailedToLoad]) {
     if (self.initialLoadingView) {
       [self.initialLoadingView removeFromSuperview];
+    }
+
+    if (self.errorView) {
+      [self showErrorView];
     }
   }
 }
@@ -700,6 +710,52 @@ createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
   }
 }
 
+/**
+ Adds the custom error view to the view hierarchy, if it has been set previously
+ */
+
+- (void)showErrorView {
+  if (!self.errorView) {
+    return;
+  }
+
+  if (self.errorView.superview) {
+    [self.errorView removeFromSuperview];
+  }
+
+  self.errorView.frame = self.bounds;
+  self.errorView.translatesAutoresizingMaskIntoConstraints = NO;
+  [self addSubview:self.errorView];
+  NSLayoutConstraint *topConstraint = [NSLayoutConstraint constraintWithItem:self.errorView
+                                                                   attribute:NSLayoutAttributeTop
+                                                                   relatedBy:NSLayoutRelationEqual
+                                                                      toItem:self attribute:NSLayoutAttributeTop
+                                                                  multiplier:1.0
+                                                                    constant:0.0];
+  NSLayoutConstraint *leadingConstraint = [NSLayoutConstraint constraintWithItem:self.errorView
+                                                                       attribute:NSLayoutAttributeLeading
+                                                                       relatedBy:NSLayoutRelationEqual
+                                                                          toItem:self
+                                                                       attribute:NSLayoutAttributeLeading
+                                                                      multiplier:1.0
+                                                                        constant:0.0];
+  NSLayoutConstraint *trailingConstraint = [NSLayoutConstraint constraintWithItem:self.errorView
+                                                                        attribute:NSLayoutAttributeTrailing
+                                                                        relatedBy:NSLayoutRelationEqual
+                                                                           toItem:self
+                                                                        attribute:NSLayoutAttributeTrailing
+                                                                       multiplier:1.0
+                                                                         constant:0.0];
+  NSLayoutConstraint *bottomConstraint = [NSLayoutConstraint constraintWithItem:self.errorView
+                                                                      attribute:NSLayoutAttributeBottom
+                                                                      relatedBy:NSLayoutRelationEqual
+                                                                         toItem:self
+                                                                      attribute:NSLayoutAttributeBottom
+                                                                     multiplier:1.0
+                                                                       constant:0.0];
+  NSArray *constraints = @[topConstraint, leadingConstraint, trailingConstraint, bottomConstraint];
+  [self addConstraints:constraints];
+}
 
 /**
  * Private helper method to load an iframe player with the given player parameters.
@@ -790,10 +846,51 @@ createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
     UIView *initialLoadingView = [self.delegate playerViewPreferredInitialLoadingView:self];
     if (initialLoadingView) {
       initialLoadingView.frame = self.bounds;
-      initialLoadingView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+      initialLoadingView.translatesAutoresizingMaskIntoConstraints = NO;
       [self addSubview:initialLoadingView];
+
+      NSLayoutConstraint *topConstraint = [NSLayoutConstraint constraintWithItem:initialLoadingView
+                                                                       attribute:NSLayoutAttributeTop
+                                                                       relatedBy:NSLayoutRelationEqual
+                                                                          toItem:self
+                                                                       attribute:NSLayoutAttributeTop
+                                                                      multiplier:1.0
+                                                                        constant:0.0];
+      NSLayoutConstraint *leadingConstraint = [NSLayoutConstraint constraintWithItem:initialLoadingView
+                                                                           attribute:NSLayoutAttributeLeading
+                                                                           relatedBy:NSLayoutRelationEqual
+                                                                              toItem:self
+                                                                           attribute:NSLayoutAttributeLeading
+                                                                          multiplier:1.0
+                                                                            constant:0.0];
+      NSLayoutConstraint *trailingConstraint = [NSLayoutConstraint constraintWithItem:initialLoadingView
+                                                                            attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual
+                                                                               toItem:self
+                                                                            attribute:NSLayoutAttributeTrailing
+                                                                           multiplier:1.0
+                                                                             constant:0.0];
+      NSLayoutConstraint *bottomConstraint = [NSLayoutConstraint constraintWithItem:initialLoadingView
+                                                                          attribute:NSLayoutAttributeBottom
+                                                                          relatedBy:NSLayoutRelationEqual
+                                                                             toItem:self
+                                                                          attribute:NSLayoutAttributeBottom
+                                                                         multiplier:1.0
+                                                                           constant:0.0];
+
+      NSArray* constraints = @[topConstraint, leadingConstraint, trailingConstraint, bottomConstraint];
+
+      [self addConstraints:constraints];
+
       self.initialLoadingView = initialLoadingView;
     }
+
+    if ([self.delegate respondsToSelector:@selector(playerViewPreferredErrorView:)]) {
+      UIView *errorView = [self.delegate playerViewPreferredErrorView:self];
+      if (errorView) {
+        self.errorView = errorView;
+      }
+    }
+
   }
   
   return YES;
