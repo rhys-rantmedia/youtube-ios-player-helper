@@ -141,6 +141,18 @@ typedef void (^YTPlaybackQualityCompletionHandler)(YTPlaybackQuality result,
  */
 - (nullable UIView *)playerViewPreferredInitialLoadingView:(nonnull YTPlayerView *)playerView;
 
+
+/**
+ Callback invoked when initially loading the YouTube iframe to the webview to display a custom
+ error view when the player iframe has failed to load. The error view will be automatically resized
+ to cover the entire player view.
+
+ @param playerView The YTPlayerView instance where the error view will be used
+ @return A view object that will be displayed when YouTube iframe API failed to load.
+         Pass nil to display no custom loading view. Default implementation returns nil.
+ */
+
+- (nullable UIView *)playerViewPreferredErrorView:(nonnull YTPlayerView *)playerView;
 @end
 
 /**
